@@ -1,0 +1,31 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: ${APP_NAME:spubgv2}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/${MYSQL_DATABASE:spubgv2}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:${MYSQL_USER:root}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${MYSQL_PASSWORD:password}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/java,src/main/resources
+    livereload:
+      enabled: true
+
+# 커스텀 환경변수 설정
+app:
+  name: ${APP_NAME:spubgv2}
+  version: ${APP_VERSION:1.0.0}
+  env: ${APP_ENV:development}
