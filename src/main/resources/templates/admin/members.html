@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>멤버 관리</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .long-text {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            cursor: help;
+            display: inline-block;
+        }
+
+        .long-text:hover {
+            overflow: visible;
+            white-space: normal;
+            word-break: break-all;
+            position: relative;
+            z-index: 10;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 4px;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0">멤버 관리</h2>
+                        <span class="badge" 
+                              id="tokenStatus" 
+                              th:classappend="${availableTokens < 3} ? 'bg-danger' : 'bg-info'"
+                              style="font-size: 14px; padding: 8px 16px;">
+                            토큰: <span id="availableTokens" th:text="${availableTokens}">0</span> / <span id="maxTokens" th:text="${maxTokens}">10</span>
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 새 멤버 추가 폼 -->
+                        <div class="card mb-4 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">새 멤버 추가</h5>
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="usernameInput" 
+                                           placeholder="USERNAME 입력" />
+                                    <button class="btn btn-primary" onclick="addMember()">추가</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 멤버 테이블 -->
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 5%;">ID</th>
+                                        <th style="width: 12%;">USERNAME</th>
+                                        <th style="width: 20%;">DISCORD_NAME</th>
+                                        <th style="width: 25%;">ACCOUNT_ID</th>
+                                        <th style="width: 25%;">CLAN_ID</th>
+                                        <th style="width: 8%;">연동 상태</th>
+                                        <th style="width: 5%;">작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="memberTableBody">
+                                    <tr th:each="member : ${members}">
+                                        <td th:text="${member.memberId}"></td>
+                                        <td th:text="${member.username}"></td>
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" 
+                                                       class="form-control" 
+                                                       th:id="'discord-' + ${member.memberId}"
+                                                       th:value="${member.discordName ?: ''}"
+                                                       placeholder="Discord 이름 입력" />
+                                                <button class="btn btn-success btn-sm" 
+                                                        th:onclick="'updateDiscordName(' + ${member.memberId} + ')'">
+                                                    등록
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="long-text" 
+                                                  th:if="${member.accountId}" 
+                                                  th:text="${member.accountId}"
+                                                  th:attr="title=${member.accountId}"></span>
+                                            <span class="text-muted" th:unless="${member.accountId}">-</span>
+                                        </td>
+                                        <td>
+                                            <span class="long-text" 
+                                                  th:if="${member.clanId}" 
+                                                  th:text="${member.clanId}"
+                                                  th:attr="title=${member.clanId}"></span>
+                                            <span class="text-muted" th:unless="${member.clanId}">-</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${member.accountId}" 
+                                                  class="badge bg-success">연동완료</span>
+                                            <button th:unless="${member.accountId}" 
+                                                    class="btn btn-warning btn-sm" 
+                                                    th:id="'link-btn-' + ${member.memberId}"
+                                                    th:onclick="'linkAccount(' + ${member.memberId} + ')'"
+                                                    th:disabled="${availableTokens == 0}">
+                                                연동
+                                            </button>
+                                        </td>
+                                        <td>
+                                            <!-- 추가 작업 버튼들 -->
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(members)}">
+                                        <td colspan="7" class="text-center text-muted py-5">
+                                            등록된 멤버가 없습니다.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 토큰 상태 실시간 업데이트
+        function updateTokenStatus() {
+            fetch('/admin/tokens/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('availableTokens').textContent = data.availableTokens;
+                    document.getElementById('maxTokens').textContent = data.maxTokens;
+                    
+                    const tokenStatus = document.getElementById('tokenStatus');
+                    if (data.availableTokens < 3) {
+                        tokenStatus.classList.remove('bg-info');
+                        tokenStatus.classList.add('bg-danger');
+                    } else {
+                        tokenStatus.classList.remove('bg-danger');
+                        tokenStatus.classList.add('bg-info');
+                    }
+
+                    // 연동 버튼 활성/비활성화
+                    document.querySelectorAll('[id^="link-btn-"]').forEach(btn => {
+                        btn.disabled = data.availableTokens === 0;
+                    });
+                })
+                .catch(error => console.error('토큰 상태 업데이트 실패:', error));
+        }
+
+        // 멤버 추가
+        function addMember() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                alert('USERNAME을 입력해주세요.');
+                return;
+            }
+
+            fetch('/admin/members', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'username=' + encodeURIComponent(username)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('멤버가 추가되었습니다.');
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('멤버 추가 중 오류가 발생했습니다.');
+            });
+        }
+
+        // Discord 이름 업데이트
+        function updateDiscordName(memberId) {
+            const discordName = document.getElementById('discord-' + memberId).value.trim();
+            
+            fetch('/admin/members/' + memberId + '/discord-name', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'discordName=' + encodeURIComponent(discordName)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Discord 이름이 업데이트되었습니다.');
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Discord 이름 업데이트 중 오류가 발생했습니다.');
+            });
+        }
+
+        // PUBG 계정 연동
+        function linkAccount(memberId) {
+            if (!confirm('PUBG API를 통해 계정을 연동하시겠습니까?')) {
+                return;
+            }
+
+            const btn = document.getElementById('link-btn-' + memberId);
+            btn.disabled = true;
+            btn.textContent = '연동 중...';
+
+            fetch('/admin/members/' + memberId + '/link', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('계정이 연동되었습니다.');
+                    updateTokenStatus();
+                    location.reload();
+                } else {
+                    alert('오류: ' + data.message);
+                    btn.disabled = false;
+                    btn.textContent = '연동';
+                    updateTokenStatus();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('계정 연동 중 오류가 발생했습니다.');
+                btn.disabled = false;
+                btn.textContent = '연동';
+                updateTokenStatus();
+            });
+        }
+
+        // 페이지 로드 시 토큰 상태 업데이트 시작
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTokenStatus();
+            // 5초마다 토큰 상태 업데이트
+            setInterval(updateTokenStatus, 5000);
+        });
+    </script>
+</body>
+</html>
