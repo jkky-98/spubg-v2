@@ -1,0 +1,61 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: spubgv2-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - spubgv2-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: spubgv2-app-dev
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${APP_PORT}:${SERVER_PORT:-8080}"
+    volumes:
+      # 소스 코드를 볼륨으로 마운트 (변경사항 즉시 반영)
+      - ./src:/app/src
+      - ./build.gradle:/app/build.gradle
+      - ./settings.gradle:/app/settings.gradle
+      - ./gradlew:/app/gradlew
+      - ./gradle:/app/gradle
+      # 빌드 캐시 유지
+      - gradle_cache:/root/.gradle
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - spubgv2-network
+    # 개발 모드: gradle bootRun 사용
+    command: ./gradlew bootRun --no-daemon
+
+volumes:
+  mysql_data:
+  gradle_cache:
+
+networks:
+  spubgv2-network:
+    driver: bridge
+

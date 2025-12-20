@@ -1,0 +1,23 @@
+FROM gradle:8.14-jdk21
+WORKDIR /app
+
+# Gradle wrapper 권한 설정
+RUN chmod +x ./gradlew || true
+
+# 기본 파일들 복사
+COPY build.gradle settings.gradle ./
+COPY gradlew ./
+COPY gradle ./gradle
+RUN chmod +x ./gradlew
+
+# 의존성 다운로드 (캐시 활용)
+RUN gradle dependencies --no-daemon || true
+
+# 소스 코드는 볼륨으로 마운트되므로 여기서는 복사하지 않음
+# volumes에서 마운트됨
+
+EXPOSE 8080
+
+# 개발 모드: gradle bootRun 사용 (핫 리로드)
+CMD ["./gradlew", "bootRun", "--no-daemon"]
+
