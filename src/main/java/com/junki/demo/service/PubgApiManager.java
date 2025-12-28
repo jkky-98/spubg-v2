@@ -15,7 +15,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class PubgApiManager {
 	private final WebClient webClient;
 	private final PubgUtil pubgUtil;
-	private final TokenManager tokenManager;
 	private final ObjectMapper objectMapper;
 
 	/**
@@ -24,7 +23,6 @@ public class PubgApiManager {
 	 * @return JsonNode (응답 데이터)
 	 */
 	public JsonNode get(String endpoint) {
-		tokenManager.consume();
 
 		String fullUrl = pubgUtil.getBaseUrl() + endpoint;
 		log.info("[PubgApiManager][get] API 요청 시작: {}", fullUrl);
@@ -72,6 +70,33 @@ public class PubgApiManager {
 	 */
 	public JsonNode requestMember(String username) {
 		return get("/players?filter[playerNames]=" + username);
+	}
+
+	/**
+	 * 여러 플레이어 정보 조회
+	 * @param usernames 플레이어 이름 리스트
+	 * @return JsonNode 플레이어 정보
+	 */
+	public JsonNode requestManyMembers(java.util.List<String> usernames) {
+		String joined = String.join(",", usernames);
+		return get("/players?filter[playerNames]=" + joined);
+	}
+
+	/**
+	 * 매치 정보 조회
+	 * @param matchApiId 매치 API ID (예: "29c0c3c1-3b83-4e90-a29a-c0721efa014a")
+	 * @return JsonNode 매치 정보
+	 */
+	public JsonNode requestMatch(String matchApiId) {
+		return get("/matches/" + matchApiId);
+	}
+
+	/**
+	 * 시즌 정보 조회
+	 * @return JsonNode 시즌 정보
+	 */
+	public JsonNode requestSeasons() {
+		return get("/seasons");
 	}
 }
 

@@ -10,11 +10,12 @@ COPY gradlew ./
 COPY gradle ./gradle
 RUN chmod +x ./gradlew
 
-# 의존성 다운로드 (캐시 활용)
-RUN gradle dependencies --no-daemon || true
+# 소스 코드 복사 (초기 빌드용)
+COPY src ./src
 
-# 소스 코드는 볼륨으로 마운트되므로 여기서는 복사하지 않음
-# volumes에서 마운트됨
+# 의존성 다운로드 및 초기 빌드 (캐시 활용)
+RUN gradle dependencies --no-daemon || true
+RUN gradle compileJava --no-daemon || true
 
 EXPOSE 8080
 

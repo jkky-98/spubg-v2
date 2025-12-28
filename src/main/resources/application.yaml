@@ -23,6 +23,21 @@ spring:
       additional-paths: src/main/java,src/main/resources
     livereload:
       enabled: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        concurrency: 1
+        max-concurrency: 1
+        prefetch: 1  # 한 번에 딱 하나만 가져와서 처리하게 함
+        retry:
+          enabled: true
+          initial-interval: 1000
+          multiplier: 2
+          max-retries: 3
 
 # 커스텀 환경변수 설정
 app:

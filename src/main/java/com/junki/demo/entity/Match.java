@@ -1,5 +1,6 @@
 package com.junki.demo.entity;
 
+import com.junki.demo.converter.GameMapConverter;
 import com.junki.demo.enums.GameMap;
 import com.junki.demo.enums.GameMode;
 import jakarta.persistence.*;
@@ -9,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "match")
+@Table(name = "matches")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,6 +22,9 @@ public class Match extends BaseTimeEntity{
     @Column(name = "match_id")
     private Long id;
 
+    @Column(name = "match_api_id", unique = true)
+    private String matchApiId;
+
     @Column(name = "asset_id")
     private String assetId;
 
@@ -28,7 +32,8 @@ public class Match extends BaseTimeEntity{
     private String assetUrl;
 
     @Column(name = "map")
-    private String map;
+    @Convert(converter = GameMapConverter.class)
+    private GameMap map;
 
     @Enumerated(EnumType.STRING)
     private GameMode gameMode;
@@ -39,4 +44,8 @@ public class Match extends BaseTimeEntity{
 
     @Column(name = "analysis")
     private boolean analysis;
+
+    public void finishAnalysis() {
+        this.analysis = true;
+    }
 }

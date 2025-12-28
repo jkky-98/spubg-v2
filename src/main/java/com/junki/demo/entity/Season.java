@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "match")
+@Table(name = "season")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -27,4 +27,12 @@ public class Season extends BaseTimeEntity {
 
     @Column(name = "off_season")
     private boolean offSeason;
+
+    public void updateCurrent(boolean current) {
+        this.current = current;
+    }
+
+    public void updateOffSeason(boolean offSeason) {
+        this.offSeason = offSeason;
+    }
 }

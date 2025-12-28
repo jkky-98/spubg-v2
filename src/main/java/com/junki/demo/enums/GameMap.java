@@ -37,5 +37,33 @@ public enum GameMap {
     public static String getDisplayName(String mapKey) {
         return LOOKUP.getOrDefault(mapKey, UNKNOWN).displayName;
     }
+
+    /**
+     * mapKey 문자열로부터 GameMap enum을 찾아 반환
+     * @param mapKey 맵 키 (예: "Erangel_Main")
+     * @return GameMap enum, 없으면 UNKNOWN
+     */
+    public static GameMap fromString(String mapKey) {
+        if (mapKey == null || mapKey.isEmpty()) {
+            return UNKNOWN;
+        }
+        return LOOKUP.getOrDefault(mapKey, UNKNOWN);
+    }
+
+    /**
+     * GameMap enum의 mapKey 반환
+     * @return mapKey 문자열
+     */
+    public String getMapKey() {
+        return mapKey;
+    }
+
+    /**
+     * GameMap enum의 displayName 반환
+     * @return displayName 문자열
+     */
+    public String getDisplayName() {
+        return displayName;
+    }
 }
 

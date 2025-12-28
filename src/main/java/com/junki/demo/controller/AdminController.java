@@ -2,7 +2,7 @@ package com.junki.demo.controller;
 
 import com.junki.demo.entity.Member;
 import com.junki.demo.service.MemberService;
-import com.junki.demo.service.TokenManager;
+import io.github.bucket4j.Bucket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -18,7 +18,7 @@ import java.util.Map;
 public class AdminController {
 
 	private final MemberService memberService;
-	private final TokenManager tokenManager;
+	private final Bucket pubgApiBucket;
 
 	/**
 	 * 관리 페이지 메인
@@ -27,8 +27,8 @@ public class AdminController {
 	public String adminPage(Model model) {
 		try {
 			model.addAttribute("members", memberService.findAll());
-			model.addAttribute("availableTokens", tokenManager.getAvailableTokens());
-			model.addAttribute("maxTokens", tokenManager.getMaxTokens());
+			model.addAttribute("availableTokens", pubgApiBucket.getAvailableTokens());
+			model.addAttribute("maxTokens", 10);
 			return "admin/members";
 		} catch (Exception e) {
 			model.addAttribute("error", e.getMessage());
@@ -101,13 +101,13 @@ public class AdminController {
 			Map<String, Object> response = new HashMap<>();
 			response.put("success", true);
 			response.put("member", member);
-			response.put("availableTokens", tokenManager.getAvailableTokens());
+			response.put("availableTokens", pubgApiBucket.getAvailableTokens());
 			return ResponseEntity.ok(response);
 		} catch (Exception e) {
 			Map<String, Object> response = new HashMap<>();
 			response.put("success", false);
 			response.put("message", e.getMessage());
-			response.put("availableTokens", tokenManager.getAvailableTokens());
+			response.put("availableTokens", pubgApiBucket.getAvailableTokens());
 			return ResponseEntity.badRequest().body(response);
 		}
 	}
@@ -119,8 +119,8 @@ public class AdminController {
 	@ResponseBody
 	public ResponseEntity<Map<String, Object>> getTokenStatus() {
 		Map<String, Object> response = new HashMap<>();
-		response.put("availableTokens", tokenManager.getAvailableTokens());
-		response.put("maxTokens", tokenManager.getMaxTokens());
+		response.put("availableTokens", pubgApiBucket.getAvailableTokens());
+		response.put("maxTokens", 10);
 		return ResponseEntity.ok(response);
 	}
 }
