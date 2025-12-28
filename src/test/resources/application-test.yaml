@@ -1,0 +1,36 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        # 스키마 드롭 시 오류 무시 (테이블이 없을 때 외래키 삭제 시도 방지)
+        hbm2ddl:
+          jdbc_metadata_extraction_strategy: individually
+        # H2 데이터베이스 호환성 설정
+        dialect: org.hibernate.dialect.H2Dialect
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    # 테스트 환경에서는 RabbitMQ 자동 설정 비활성화
+    listener:
+      simple:
+        auto-startup: false
+
+# 테스트용 PUBG API 키 (실제 값은 필요 없음)
+PUBG_API_KEY: test-api-key
+
